@@ -1,4 +1,4 @@
-package cn.hzw.graffiti;
+package cn.hzw.graffiti.widget;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -16,8 +16,8 @@ import android.view.View;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import cn.forward.androids.utils.ImageUtils;
-import cn.forward.androids.utils.ThreadUtil;
 import cn.forward.androids.utils.Util;
+import cn.hzw.graffiti.util.DrawUtil;
 
 /**
  * Created by huangziwei on 2016/9/3.
