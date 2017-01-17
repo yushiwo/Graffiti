@@ -27,7 +27,10 @@ import cn.forward.androids.utils.LogUtil;
 import cn.forward.androids.utils.ThreadUtil;
 import cn.hzw.graffiti.info.GraffitiParams;
 import cn.hzw.graffiti.widget.ColorPickerDialog;
-import cn.hzw.graffiti.widget.GraffitiView;
+import cn.hzw.graffiti.widget.graffiti.GraffitiView;
+import cn.hzw.graffiti.widget.graffiti.info.GraffitiColor;
+import cn.hzw.graffiti.widget.graffiti.info.Pen;
+import cn.hzw.graffiti.widget.graffiti.info.Shape;
 
 /**
  * 涂鸦界面，根据GraffitiView的接口，提供页面交互
@@ -281,9 +284,9 @@ public class GraffitiActivity extends Activity {
         mBtnColor = findViewById(R.id.btn_set_color);
         mBtnColor.setOnClickListener(mOnClickListener);
         mSettingsPanel = findViewById(R.id.graffiti_panel);
-        if (mGraffitiView.getGraffitiColor().getType() == GraffitiView.GraffitiColor.Type.COLOR) {
+        if (mGraffitiView.getGraffitiColor().getType() == GraffitiColor.Type.COLOR) {
             mBtnColor.setBackgroundColor(mGraffitiView.getGraffitiColor().getColor());
-        } else if (mGraffitiView.getGraffitiColor().getType() == GraffitiView.GraffitiColor.Type.BITMAP) {
+        } else if (mGraffitiView.getGraffitiColor().getType() == GraffitiColor.Type.BITMAP) {
             mBtnColor.setBackgroundDrawable(new BitmapDrawable(mGraffitiView.getGraffitiColor().getBitmap()));
         }
 
@@ -454,13 +457,13 @@ public class GraffitiActivity extends Activity {
         public void onClick(View v) {
             mDone = false;
             if (v.getId() == R.id.btn_pen_hand) {
-                mGraffitiView.setPen(GraffitiView.Pen.HAND);
+                mGraffitiView.setPen(Pen.HAND);
                 mDone = true;
             } else if (v.getId() == R.id.btn_pen_copy) {
-                mGraffitiView.setPen(GraffitiView.Pen.COPY);
+                mGraffitiView.setPen(Pen.COPY);
                 mDone = true;
             } else if (v.getId() == R.id.btn_pen_eraser) {
-                mGraffitiView.setPen(GraffitiView.Pen.ERASER);
+                mGraffitiView.setPen(Pen.ERASER);
                 mDone = true;
             }
             if (mDone) {
@@ -556,19 +559,19 @@ public class GraffitiActivity extends Activity {
             }
 
             if (v.getId() == R.id.btn_hand_write) {
-                mGraffitiView.setShape(GraffitiView.Shape.HAND_WRITE);
+                mGraffitiView.setShape(Shape.HAND_WRITE);
             } else if (v.getId() == R.id.btn_arrow) {
-                mGraffitiView.setShape(GraffitiView.Shape.ARROW);
+                mGraffitiView.setShape(Shape.ARROW);
             } else if (v.getId() == R.id.btn_line) {
-                mGraffitiView.setShape(GraffitiView.Shape.LINE);
+                mGraffitiView.setShape(Shape.LINE);
             } else if (v.getId() == R.id.btn_holl_circle) {
-                mGraffitiView.setShape(GraffitiView.Shape.HOLLOW_CIRCLE);
+                mGraffitiView.setShape(Shape.HOLLOW_CIRCLE);
             } else if (v.getId() == R.id.btn_fill_circle) {
-                mGraffitiView.setShape(GraffitiView.Shape.FILL_CIRCLE);
+                mGraffitiView.setShape(Shape.FILL_CIRCLE);
             } else if (v.getId() == R.id.btn_holl_rect) {
-                mGraffitiView.setShape(GraffitiView.Shape.HOLLOW_RECT);
+                mGraffitiView.setShape(Shape.HOLLOW_RECT);
             } else if (v.getId() == R.id.btn_fill_rect) {
-                mGraffitiView.setShape(GraffitiView.Shape.FILL_RECT);
+                mGraffitiView.setShape(Shape.FILL_RECT);
             }
 
             if (mLastShapeView != null) {

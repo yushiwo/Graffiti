@@ -1,4 +1,4 @@
-package cn.hzw.graffiti.widget;
+package cn.hzw.graffiti.widget.graffiti;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -18,9 +18,14 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import cn.forward.androids.utils.ImageUtils;
 import cn.forward.androids.utils.Util;
 import cn.hzw.graffiti.util.DrawUtil;
+import cn.hzw.graffiti.widget.graffiti.info.GraffitiColor;
+import cn.hzw.graffiti.widget.graffiti.info.GraffitiPath;
+import cn.hzw.graffiti.widget.graffiti.info.Pen;
+import cn.hzw.graffiti.widget.graffiti.info.Shape;
 
 /**
  * Created by huangziwei on 2016/9/3.
+ * modified by zhengrui
  */
 public class GraffitiView extends View {
 
@@ -83,27 +88,27 @@ public class GraffitiView extends View {
     private CopyOnWriteArrayList<GraffitiPath> mPathStack = new CopyOnWriteArrayList<GraffitiPath>();
 //    private CopyOnWriteArrayList<GraffitiPath> mPathStackBackup = new CopyOnWriteArrayList<GraffitiPath>();
 
-    /**
-     * 画笔
-     */
-    public enum Pen {
-        HAND, // 手绘
-        COPY, // 仿制
-        ERASER // 橡皮擦
-    }
-
-    /**
-     * 图形
-     */
-    public enum Shape {
-        HAND_WRITE, //
-        ARROW, // 箭头
-        LINE, // 直线
-        FILL_CIRCLE, // 实心圆
-        HOLLOW_CIRCLE, // 空心圆
-        FILL_RECT, // 实心矩形
-        HOLLOW_RECT, // 空心矩形
-    }
+//    /**
+//     * 画笔
+//     */
+//    public enum Pen {
+//        HAND, // 手绘
+//        COPY, // 仿制
+//        ERASER // 橡皮擦
+//    }
+//
+//    /**
+//     * 图形
+//     */
+//    public enum Shape {
+//        HAND_WRITE, //
+//        ARROW, // 箭头
+//        LINE, // 直线
+//        FILL_CIRCLE, // 实心圆
+//        HOLLOW_CIRCLE, // 空心圆
+//        FILL_RECT, // 实心矩形
+//        HOLLOW_RECT, // 空心矩形
+//    }
 
     private Pen mPen;
     private Shape mShape;
@@ -591,44 +596,6 @@ public class GraffitiView extends View {
         return (y) / (mPrivateScale * mScale);
     }
 
-
-    private static class GraffitiPath {
-        Pen mPen; // 画笔类型
-        Shape mShape; // 画笔形状
-        float mStrokeWidth; // 大小
-        GraffitiColor mColor; // 颜色
-        Path mPath; // 画笔的路径
-        float mSx, mSy; // 映射后的起始坐标，（手指点击）
-        float mDx, mDy; // 映射后的终止坐标，（手指抬起）
-        Matrix mMatrix; //　仿制图片的偏移矩阵
-
-        static GraffitiPath toShape(Pen pen, Shape shape, float width, GraffitiColor color,
-                                    float sx, float sy, float dx, float dy, Matrix matrix) {
-            GraffitiPath path = new GraffitiPath();
-            path.mPen = pen;
-            path.mShape = shape;
-            path.mStrokeWidth = width;
-            path.mColor = color;
-            path.mSx = sx;
-            path.mSy = sy;
-            path.mDx = dx;
-            path.mDy = dy;
-            path.mMatrix = matrix;
-            return path;
-        }
-
-        static GraffitiPath toPath(Pen pen, Shape shape, float width, GraffitiColor color, Path p, Matrix matrix) {
-            GraffitiPath path = new GraffitiPath();
-            path.mPen = pen;
-            path.mShape = shape;
-            path.mStrokeWidth = width;
-            path.mColor = color;
-            path.mPath = p;
-            path.mMatrix = matrix;
-            return path;
-        }
-    }
-
     private void initCanvas() {
         if (mGraffitiBitmap != null) {
             mGraffitiBitmap.recycle();
@@ -796,91 +763,6 @@ public class GraffitiView extends View {
         }
 
     }
-
-    /**
-     * 涂鸦底色
-     */
-    public static class GraffitiColor {
-        public enum Type {
-            COLOR, // 颜色值
-            BITMAP // 图片
-        }
-
-        private int mColor;
-        private Bitmap mBitmap;
-        private Type mType;
-        private Shader.TileMode mTileX = Shader.TileMode.MIRROR;
-        private Shader.TileMode mTileY = Shader.TileMode.MIRROR;  // 镜像
-
-        public GraffitiColor(int color) {
-            mType = Type.COLOR;
-            mColor = color;
-        }
-
-        public GraffitiColor(Bitmap bitmap) {
-            mType = Type.BITMAP;
-            mBitmap = bitmap;
-        }
-
-        public GraffitiColor(Bitmap bitmap, Shader.TileMode tileX, Shader.TileMode tileY) {
-            mType = Type.BITMAP;
-            mBitmap = bitmap;
-            mTileX = tileX;
-            mTileY = tileY;
-        }
-
-        void initColor(Paint paint, Matrix matrix) {
-            if (mType == Type.COLOR) {
-                paint.setColor(mColor);
-            } else if (mType == Type.BITMAP) {
-                BitmapShader shader = new BitmapShader(mBitmap, mTileX, mTileY);
-                shader.setLocalMatrix(matrix);
-                paint.setShader(shader);
-            }
-        }
-
-        private void setColor(int color) {
-            mType = Type.COLOR;
-            mColor = color;
-        }
-
-        private void setColor(Bitmap bitmap) {
-            mType = Type.BITMAP;
-            mBitmap = bitmap;
-        }
-
-        private void setColor(Bitmap bitmap, Shader.TileMode tileX, Shader.TileMode tileY) {
-            mType = Type.BITMAP;
-            mBitmap = bitmap;
-            mTileX = tileX;
-            mTileY = tileY;
-        }
-
-        public int getColor() {
-            return mColor;
-        }
-
-        public Bitmap getBitmap() {
-            return mBitmap;
-        }
-
-        public Type getType() {
-            return mType;
-        }
-
-        public GraffitiColor copy() {
-            GraffitiColor color = null;
-            if (mType == Type.COLOR) {
-                color = new GraffitiColor(mColor);
-            } else {
-                color = new GraffitiColor(mBitmap);
-            }
-            color.mTileX = mTileX;
-            color.mTileY = mTileY;
-            return color;
-        }
-    }
-
 
     // ===================== api ==============
 
