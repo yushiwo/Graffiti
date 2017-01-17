@@ -32,14 +32,21 @@ public class GraffitiView extends View {
 
     private GraffitiListener mGraffitiListener;
 
-    private Bitmap mBitmap; // 原图
-    private Bitmap mBitmapEraser; // 橡皮擦底图
-    private Bitmap mGraffitiBitmap; // 用绘制涂鸦的图片
+    /** 原图 */
+    private Bitmap mBitmap;
+    /** 橡皮擦底图 */
+    private Bitmap mBitmapEraser;
+    /** 用绘制涂鸦的图片 */
+    private Bitmap mGraffitiBitmap;
+    /** 图片的Canvas */
     private Canvas mBitmapCanvas;
 
-    private float mPrivateScale; // 图片适应屏幕时的缩放倍数
-    private int mPrivateHeight, mPrivateWidth;// 图片适应屏幕时的大小（肉眼看到的在屏幕上的大小）
-    private float mCentreTranX, mCentreTranY;// 图片居中时的偏移（肉眼看到的在屏幕上的偏移）
+    /** 图片适应屏幕时的缩放倍数 */
+    private float mPrivateScale;
+    /** 图片适应屏幕时的大小（肉眼看到的在屏幕上的大小）*/
+    private int mPrivateHeight, mPrivateWidth;
+    /** 图片居中时的偏移（肉眼看到的在屏幕上的偏移）*/
+    private float mCentreTranX, mCentreTranY;
 
     private BitmapShader mBitmapShader; // 用于涂鸦的图片上
     private BitmapShader mBitmapShader4C;
@@ -51,21 +58,28 @@ public class GraffitiView extends View {
     private CopyLocation mCopyLocation; // 仿制的定位器
 
     private Paint mPaint;
-    private int mTouchMode; // 触摸模式，用于判断单点或多点触摸
+    /** 触摸模式，用于判断单点或多点触摸 */
+    private int mTouchMode;
+    /** 画笔粗细 */
     private float mPaintSize;
-    private GraffitiColor mColor; // 画笔底色
-    private float mScale; // 缩放倍数, 图片真实的缩放倍数为 mPrivateScale*mScale
-    private float mTransX = 0, mTransY = 0; // 偏移量，图片真实偏移量为　mCentreTranX + mTransX
+    /** 画笔底色 */
+    private GraffitiColor mColor;
+    /** 缩放倍数, 图片真实的缩放倍数为 mPrivateScale * mScale */
+    private float mScale;
+    /** 偏移量，图片真实偏移量为　mCentreTranX + mTransX */
+    private float mTransX = 0, mTransY = 0;
+    /** 是否正在绘制 */
+    private boolean mIsPainting = false;
+    /** 是否只绘制原图 */
+    private boolean isJustDrawOriginal;
 
-    private boolean mIsPainting = false; // 是否正在绘制
-    private boolean isJustDrawOriginal; // 是否只绘制原图
-
-    private boolean mIsDrawableOutside = false; // 触摸时，图片区域外是否绘制涂鸦轨迹
+    /** 触摸时，图片区域外是否绘制涂鸦轨迹 */
+    private boolean mIsDrawableOutside = false;
     private boolean mEraserImageIsResizeable;
     private boolean mReady = false;
 
 
-    // 保存涂鸦操作，便于撤销
+    /** 保存涂鸦操作，便于撤销 */
     private CopyOnWriteArrayList<GraffitiPath> mPathStack = new CopyOnWriteArrayList<GraffitiPath>();
 //    private CopyOnWriteArrayList<GraffitiPath> mPathStackBackup = new CopyOnWriteArrayList<GraffitiPath>();
 
@@ -533,7 +547,8 @@ public class GraffitiView extends View {
 
 
     /**
-     * 将屏幕触摸坐标x转换成在图片中的坐标
+     * 将屏幕触摸坐标x转换成在图片中的坐标 <br />
+     * 图片实际便宜量:mCentreTranX + mTransX
      */
     public final float toX(float touchX) {
         return (touchX - mCentreTranX - mTransX) / (mPrivateScale * mScale);
@@ -563,7 +578,7 @@ public class GraffitiView extends View {
     }
 
     /**
-     * 将屏幕触摸坐标x转换成在canvas中的坐标
+     * 将屏幕触摸坐标x转换成在canvas中的坐标(相对于屏幕的坐标)
      */
     public final float toX4C(float x) {
         return (x) / (mPrivateScale * mScale);

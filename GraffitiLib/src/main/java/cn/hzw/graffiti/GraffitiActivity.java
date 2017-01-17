@@ -82,50 +82,64 @@ public class GraffitiActivity extends Activity {
 
     public static final String KEY_PARAMS = "key_graffiti_params";
     public static final String KEY_IMAGE_PATH = "key_image_path";
-
+    /** 原图的路径 */
     private String mImagePath;
+    /** 原图的bitmap对象 */
     private Bitmap mBitmap;
-
+    /** 涂鸦view容器 */
     private FrameLayout mFrameLayout;
+    /** 涂鸦view */
     private GraffitiView mGraffitiView;
 
     private View.OnClickListener mOnClickListener;
-
+    /** 画笔粗细的控制bar */
     private SeekBar mPaintSizeBar;
+    /** 画笔大小的指示文本 */
     private TextView mPaintSizeView;
-
+    /** 画笔颜色选择按钮 */
     private View mBtnColor;
+    /** 缩放线程 */
     private Runnable mUpdateScale;
-
+    /** 点击的模式:单指 or 双指 */
     private int mTouchMode;
+    /** 是否移动图片 */
     private boolean mIsMovingPic = false;
-
-    // 手势操作相关
-    private float mOldScale, mOldDist, mNewDist, mToucheCentreXOnGraffiti,
-            mToucheCentreYOnGraffiti, mTouchCentreX, mTouchCentreY;// 双指距离
-
+    /** 手势操作相关 */
+    private float mOldScale, mOldDist, mNewDist;
+    /** 双指点击在涂鸦图片上的中点 */
+    private float mToucheCentreXOnGraffiti, mToucheCentreYOnGraffiti;
+    /** 双指点击在屏幕的中点 */
+    private float mTouchCentreX, mTouchCentreY;
+    /** 最近点击的坐标 */
     private float mTouchLastX, mTouchLastY;
-
+    /** 当前是否在缩放状态 */
     private boolean mIsScaling = false;
+    /** 当前放大倍数 */
     private float mScale = 1;
-    private final float mMaxScale = 3.5f; // 最大缩放倍数
-    private final float mMinScale = 0.25f; // 最小缩放倍数
+    /** 最大缩放倍数 */
+    private final float mMaxScale = 3.5f;
+    /** 最小缩放倍数 */
+    private final float mMinScale = 1.0f;
+    /** 缩放时线程每次sleep的时间间隔,为了让缩放过程看着流畅 */
     private final int TIME_SPAN = 40;
+    /** 移动图片开关按钮、工具栏可见性控制按钮、 工具栏容器布局*/
     private View mBtnMovePic, mBtnHidePanel, mSettingsPanel;
-
+    /** 判断为移动的最小距离 */
     private int mTouchSlop;
+    /** view隐藏和显示时用到的渐变动画 */
+    private AlphaAnimation mViewShowAnimation, mViewHideAnimation;
 
-    private AlphaAnimation mViewShowAnimation, mViewHideAnimation; // view隐藏和显示时用到的渐变动画
-
-    // 当前屏幕中心点对应在GraffitiView中的点的坐标
+    /** 当前屏幕中心点对应在GraffitiView中的点的坐标 */
     float mCenterXOnGraffiti;
+    /** 当前屏幕中心点对应在GraffitiView中的点的坐标 */
     float mCenterYOnGraffiti;
 
+    /** 涂鸦参数 */
     private GraffitiParams mGraffitiParams;
 
-    // 触摸屏幕超过一定时间才判断为需要隐藏设置面板
+    /** 触摸屏幕超过一定时间才判断为需要隐藏设置面板 */
     private Runnable mHideDelayRunnable;
-    //触摸屏幕超过一定时间才判断为需要隐藏设置面板
+    /** 触摸屏幕超过一定时间才判断为需要显示设置面板 */
     private Runnable mShowDelayRunnable;
 
     @Override
