@@ -225,10 +225,10 @@ public class GraffitiView extends View {
     private float mToucheCentreXOnGraffiti, mToucheCentreYOnGraffiti;
     /** 双指点击在屏幕的中点 */
     private float mTouchCentreX, mTouchCentreY;
-
+    /** 当前是否拖动图片标志位 */
     private boolean isMoving = false;
-
-    boolean mIsBusy = false; // 避免双指滑动，手指抬起时处理单指事件。
+    /** 避免双指滑动，手指抬起时处理单指事件 */
+    boolean mIsBusy = false;
 
     public boolean isMoving() {
         return isMoving;
