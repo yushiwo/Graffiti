@@ -10,6 +10,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Shader;
 import android.os.Build;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -29,6 +30,8 @@ import cn.hzw.graffiti.widget.graffiti.info.Shape;
  * modified by zhengrui
  */
 public class GraffitiView extends View {
+
+    private static final String TAG = GraffitiView.class.getSimpleName();
 
     public static final int ERROR_INIT = -1;
     public static final int ERROR_SAVE = -2;
@@ -213,10 +216,12 @@ public class GraffitiView extends View {
         return (float) Math.sqrt(x * x + y * y);
     }
 
+
+
     /** 手势操作相关 */
     private float mOldScale, mOldDist, mNewDist;
     /** 最大缩放倍数 */
-    private final float mMaxScale = 3.5f;
+    private final float mMaxScale = 5.0f;
     /** 最小缩放倍数 */
     private final float mMinScale = 1.0f;
     /** 判断为移动的最小距离 */
@@ -306,6 +311,7 @@ public class GraffitiView extends View {
 
         switch (event.getAction() & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:
+                Log.d(TAG, "ACTION_DOWN");
                 mTouchMode = 1;
                 mTouchDownX = mTouchX = mLastTouchX = event.getX();
                 mTouchDownY = mTouchY = mLastTouchY = event.getY();
@@ -333,7 +339,7 @@ public class GraffitiView extends View {
                     }
                     mIsPainting = true;
                 }
-                invalidate();
+//                invalidate();
                 return true;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
@@ -385,6 +391,15 @@ public class GraffitiView extends View {
                 return true;
             case MotionEvent.ACTION_MOVE:
                 if (mTouchMode < 2) { // 单点滑动
+                    Log.d(TAG, "ACTION_MOVE 1");
+                    if (mIsBusy) { // 从多点触摸变为单点触摸，忽略该次事件，避免从双指缩放变为单指移动时图片瞬间移动
+                        Log.d(TAG, "ACTION_MOVE 1 isbusy true");
+                        mIsBusy = false;
+                        mLastTouchX = event.getX();
+                        mLastTouchY = event.getY();
+                        return true;
+                    }
+
                     mLastTouchX = mTouchX;
                     mLastTouchY = mTouchY;
                     mTouchX = event.getX();
@@ -413,20 +428,53 @@ public class GraffitiView extends View {
                         }
                     }
                 } else { // 多点
+                    Log.d(TAG, "ACTION_MOVE 2");
+                    mIsPainting = false;
 
+                    // 缩放
+                    Log.d(TAG, "缩放");
+                    mNewDist = spacing(event);// 两点滑动时的距离
+                    if (Math.abs(mNewDist - mOldDist) >= mTouchSlop) {
+                        float scale = mNewDist / mOldDist;
+                        mScale = mOldScale * scale;
+
+                        if (mScale > mMaxScale) {
+                            mScale = mMaxScale;
+                        }
+                        if (mScale < mMinScale) { // 最小倍数
+                            mScale = mMinScale;
+                        }
+                        // 围绕坐标(0,0)缩放图片
+                        setScale(mScale);
+                        // 缩放后，偏移图片，以产生围绕某个点缩放的效果
+                        float transX = toTransX(mTouchCentreX, mToucheCentreXOnGraffiti);
+                        float transY = toTransY(mTouchCentreY, mToucheCentreYOnGraffiti);
+                        setTrans(transX, transY);
+                    }
+
+                    mLastTouchX = event.getX(0);
+                    mLastTouchY = event.getY(0);
                 }
-
                 invalidate();
+
                 return true;
             case MotionEvent.ACTION_POINTER_UP:
                 mTouchMode -= 1;
 
-                invalidate();
+//                invalidate();
                 return true;
             case MotionEvent.ACTION_POINTER_DOWN:
                 mTouchMode += 1;
 
-                invalidate();
+                mOldScale = getScale();
+                mOldDist = spacing(event);// 两点按下时的距离
+                mTouchCentreX = (event.getX(0) + event.getX(1)) / 2;// 不用减trans
+                mTouchCentreY = (event.getY(0) + event.getY(1)) / 2;
+                mToucheCentreXOnGraffiti = toX(mTouchCentreX);
+                mToucheCentreYOnGraffiti = toY(mTouchCentreY);
+                mIsBusy = true; // 标志位多点触摸
+
+//                invalidate();
                 return true;
         }
         return super.onTouchEvent(event);
@@ -472,28 +520,28 @@ public class GraffitiView extends View {
         doDraw(canvas);
         canvas.restore();
 
-        if (mAmplifierScale > 0) { //启用放大镜
-            canvas.save();
-
-            if (mTouchY <= mAmplifierRadius * 2) { // 在放大镜的范围内， 把放大镜仿制底部
-                canvas.translate(mAmplifierHorizonX, getHeight() - mAmplifierRadius * 2);
-            } else {
-                canvas.translate(mAmplifierHorizonX, 0);
-            }
-            canvas.clipPath(mAmplifierPath);
-            canvas.drawColor(0xff000000);
-
-            canvas.save();
-            float scale = mAmplifierScale / mScale; // 除以mScale，无论当前图片缩放多少，都产生图片在居中状态下缩放mAmplifierScale倍的效果
-            canvas.scale(scale, scale);
-            canvas.translate(-mTouchX + mAmplifierRadius / scale, -mTouchY + mAmplifierRadius / scale);
-            doDraw(canvas);
-            canvas.restore();
-
-            // 画放大器的边框
-            DrawUtil.drawCircle(canvas, mAmplifierRadius, mAmplifierRadius, mAmplifierRadius, mAmplifierPaint);
-            canvas.restore();
-        }
+//        if (mAmplifierScale > 0) { //启用放大镜
+//            canvas.save();
+//
+//            if (mTouchY <= mAmplifierRadius * 2) { // 在放大镜的范围内， 把放大镜仿制底部
+//                canvas.translate(mAmplifierHorizonX, getHeight() - mAmplifierRadius * 2);
+//            } else {
+//                canvas.translate(mAmplifierHorizonX, 0);
+//            }
+//            canvas.clipPath(mAmplifierPath);
+//            canvas.drawColor(0xff000000);
+//
+//            canvas.save();
+//            float scale = mAmplifierScale / mScale; // 除以mScale，无论当前图片缩放多少，都产生图片在居中状态下缩放mAmplifierScale倍的效果
+//            canvas.scale(scale, scale);
+//            canvas.translate(-mTouchX + mAmplifierRadius / scale, -mTouchY + mAmplifierRadius / scale);
+//            doDraw(canvas);
+//            canvas.restore();
+//
+//            // 画放大器的边框
+//            DrawUtil.drawCircle(canvas, mAmplifierRadius, mAmplifierRadius, mAmplifierRadius, mAmplifierPaint);
+//            canvas.restore();
+//        }
 
     }
 
