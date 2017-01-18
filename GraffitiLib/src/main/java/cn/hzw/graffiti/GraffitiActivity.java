@@ -177,7 +177,7 @@ public class GraffitiActivity extends Activity {
 
         setContentView(R.layout.layout_graffiti);
         mFrameLayout = (FrameLayout) findViewById(R.id.graffiti_container);
-
+        // 涂鸦板回调方法
         mGraffitiView = new GraffitiView(this, mBitmap, mGraffitiParams.mEraserPath, mGraffitiParams.mEraserImageIsResizeable,
                 new GraffitiView.GraffitiListener() {
                     @Override
@@ -296,7 +296,7 @@ public class GraffitiActivity extends Activity {
         findViewById(R.id.btn_amplifier).setOnTouchListener(onTouchListener);
         findViewById(R.id.btn_reduce).setOnTouchListener(onTouchListener);
 
-        // 添加涂鸦的触摸监听器，移动图片位置
+        // 添加涂鸦的触摸监听器，设置是否隐藏工具栏
         mGraffitiView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {

@@ -31,6 +31,8 @@ import cn.hzw.graffiti.widget.graffiti.info.Shape;
  */
 public class GraffitiView extends View {
 
+    // TODO: 17/1/18 相关效果:http://blog.csdn.net/u010156024/article/details/48047737 
+
     private static final String TAG = GraffitiView.class.getSimpleName();
 
     public static final int ERROR_INIT = -1;
