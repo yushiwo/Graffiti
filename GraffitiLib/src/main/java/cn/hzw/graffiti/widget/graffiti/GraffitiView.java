@@ -12,6 +12,7 @@ import android.graphics.Shader;
 import android.os.Build;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -88,28 +89,6 @@ public class GraffitiView extends View {
     private CopyOnWriteArrayList<GraffitiPath> mPathStack = new CopyOnWriteArrayList<GraffitiPath>();
 //    private CopyOnWriteArrayList<GraffitiPath> mPathStackBackup = new CopyOnWriteArrayList<GraffitiPath>();
 
-//    /**
-//     * 画笔
-//     */
-//    public enum Pen {
-//        HAND, // 手绘
-//        COPY, // 仿制
-//        ERASER // 橡皮擦
-//    }
-//
-//    /**
-//     * 图形
-//     */
-//    public enum Shape {
-//        HAND_WRITE, //
-//        ARROW, // 箭头
-//        LINE, // 直线
-//        FILL_CIRCLE, // 实心圆
-//        HOLLOW_CIRCLE, // 空心圆
-//        FILL_RECT, // 实心矩形
-//        HOLLOW_RECT, // 空心矩形
-//    }
-
     private Pen mPen;
     private Shape mShape;
 
@@ -161,6 +140,8 @@ public class GraffitiView extends View {
             mBitmapEraser = ImageUtils.createBitmapFromPath(eraser, getContext());
         }
         mEraserImageIsResizeable = eraserImageIsResizeable;
+
+        mTouchSlop = ViewConfiguration.get(context.getApplicationContext()).getScaledTouchSlop();
 
         init();
 
@@ -219,8 +200,110 @@ public class GraffitiView extends View {
         }
     }
 
+    /**
+     * 计算两指间的距离
+     *
+     * @param event
+     * @return
+     */
+
+    private float spacing(MotionEvent event) {
+        float x = event.getX(0) - event.getX(1);
+        float y = event.getY(0) - event.getY(1);
+        return (float) Math.sqrt(x * x + y * y);
+    }
+
+    /** 手势操作相关 */
+    private float mOldScale, mOldDist, mNewDist;
+    /** 最大缩放倍数 */
+    private final float mMaxScale = 3.5f;
+    /** 最小缩放倍数 */
+    private final float mMinScale = 1.0f;
+    /** 判断为移动的最小距离 */
+    private int mTouchSlop;
+    /** 双指点击在涂鸦图片上的中点 */
+    private float mToucheCentreXOnGraffiti, mToucheCentreYOnGraffiti;
+    /** 双指点击在屏幕的中点 */
+    private float mTouchCentreX, mTouchCentreY;
+
+    private boolean isMoving = false;
+
+    boolean mIsBusy = false; // 避免双指滑动，手指抬起时处理单指事件。
+
+    public boolean isMoving() {
+        return isMoving;
+    }
+
+    public void setMoving(boolean moving) {
+        isMoving = moving;
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+
+        if (isMoving()) {
+
+            switch (event.getAction() & MotionEvent.ACTION_MASK) {
+                case MotionEvent.ACTION_DOWN:
+                    mTouchMode = 1;
+                    mLastTouchX = event.getX();
+                    mLastTouchY = event.getY();
+                    return true;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    mTouchMode = 0;
+                    return true;
+                case MotionEvent.ACTION_MOVE:
+                    if (mTouchMode < 2) { // 单点滑动
+                        if (mIsBusy) { // 从多点触摸变为单点触摸，忽略该次事件，避免从双指缩放变为单指移动时图片瞬间移动
+                            mIsBusy = false;
+                            mLastTouchX = event.getX();
+                            mLastTouchY = event.getY();
+                            return true;
+                        }
+                        float tranX = event.getX() - mLastTouchX;
+                        float tranY = event.getY() - mLastTouchY;
+                        setTrans(getTransX() + tranX, getTransY() + tranY);
+                        mLastTouchX = event.getX();
+                        mLastTouchY = event.getY();
+                    } else { // 多点
+                        mNewDist = spacing(event);// 两点滑动时的距离
+                        if (Math.abs(mNewDist - mOldDist) >= mTouchSlop) {
+                            float scale = mNewDist / mOldDist;
+                            mScale = mOldScale * scale;
+
+                            if (mScale > mMaxScale) {
+                                mScale = mMaxScale;
+                            }
+                            if (mScale < mMinScale) { // 最小倍数
+                                mScale = mMinScale;
+                            }
+                            // 围绕坐标(0,0)缩放图片
+                            setScale(mScale);
+                            // 缩放后，偏移图片，以产生围绕某个点缩放的效果
+                            float transX = toTransX(mTouchCentreX, mToucheCentreXOnGraffiti);
+                            float transY = toTransY(mTouchCentreY, mToucheCentreYOnGraffiti);
+                            setTrans(transX, transY);
+                        }
+                    }
+                    return true;
+                case MotionEvent.ACTION_POINTER_UP:
+                    mTouchMode -= 1;
+                    return true;
+                case MotionEvent.ACTION_POINTER_DOWN:
+                    mTouchMode += 1;
+                    mOldScale = getScale();
+                    mOldDist = spacing(event);// 两点按下时的距离
+                    mTouchCentreX = (event.getX(0) + event.getX(1)) / 2;// 不用减trans
+                    mTouchCentreY = (event.getY(0) + event.getY(1)) / 2;
+                    mToucheCentreXOnGraffiti = toX(mTouchCentreX);
+                    mToucheCentreYOnGraffiti = toY(mTouchCentreY);
+                    mIsBusy = true; // 标志位多点触摸
+                    return true;
+            }
+            return true;
+        }
+
         switch (event.getAction() & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:
                 mTouchMode = 1;

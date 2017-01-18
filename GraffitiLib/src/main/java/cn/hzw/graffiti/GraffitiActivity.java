@@ -39,7 +39,7 @@ import cn.hzw.graffiti.widget.graffiti.info.Shape;
  */
 public class GraffitiActivity extends Activity {
 
-    public static final String TAG = "Graffiti";
+    public static final String TAG = GraffitiActivity.class.getSimpleName();
 
     public static final int RESULT_ERROR = -111; // 出现错误
 
@@ -103,18 +103,8 @@ public class GraffitiActivity extends Activity {
     private View mBtnColor;
     /** 缩放线程 */
     private Runnable mUpdateScale;
-    /** 点击的模式:单指 or 双指 */
-    private int mTouchMode;
     /** 是否移动图片 */
     private boolean mIsMovingPic = false;
-    /** 手势操作相关 */
-    private float mOldScale, mOldDist, mNewDist;
-    /** 双指点击在涂鸦图片上的中点 */
-    private float mToucheCentreXOnGraffiti, mToucheCentreYOnGraffiti;
-    /** 双指点击在屏幕的中点 */
-    private float mTouchCentreX, mTouchCentreY;
-    /** 最近点击的坐标 */
-    private float mTouchLastX, mTouchLastY;
     /** 当前是否在缩放状态 */
     private boolean mIsScaling = false;
     /** 当前放大倍数 */
@@ -127,11 +117,8 @@ public class GraffitiActivity extends Activity {
     private final int TIME_SPAN = 40;
     /** 移动图片开关按钮、工具栏可见性控制按钮、 工具栏容器布局*/
     private View mBtnMovePic, mBtnHidePanel, mSettingsPanel;
-    /** 判断为移动的最小距离 */
-    private int mTouchSlop;
     /** view隐藏和显示时用到的渐变动画 */
     private AlphaAnimation mViewShowAnimation, mViewHideAnimation;
-
     /** 当前屏幕中心点对应在GraffitiView中的点的坐标 */
     float mCenterXOnGraffiti;
     /** 当前屏幕中心点对应在GraffitiView中的点的坐标 */
@@ -191,7 +178,6 @@ public class GraffitiActivity extends Activity {
         setContentView(R.layout.layout_graffiti);
         mFrameLayout = (FrameLayout) findViewById(R.id.graffiti_container);
 
-        // /storage/emulated/0/DCIM/Graffiti/1479369280029.jpg
         mGraffitiView = new GraffitiView(this, mBitmap, mGraffitiParams.mEraserPath, mGraffitiParams.mEraserImageIsResizeable,
                 new GraffitiView.GraffitiListener() {
                     @Override
@@ -257,7 +243,6 @@ public class GraffitiActivity extends Activity {
         mGraffitiView.setIsDrawableOutside(mGraffitiParams.mIsDrawableOutside);
         mFrameLayout.addView(mGraffitiView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         mOnClickListener = new GraffitiOnClickListener();
-        mTouchSlop = ViewConfiguration.get(getApplicationContext()).getScaledTouchSlop();
         initView();
     }
 
@@ -313,9 +298,6 @@ public class GraffitiActivity extends Activity {
 
         // 添加涂鸦的触摸监听器，移动图片位置
         mGraffitiView.setOnTouchListener(new View.OnTouchListener() {
-
-            boolean mIsBusy = false; // 避免双指滑动，手指抬起时处理单指事件。
-
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 // 隐藏设置面板
@@ -336,69 +318,7 @@ public class GraffitiActivity extends Activity {
                     }
                 }
 
-                if (!mIsMovingPic) {
-                    return false;  // 交给下一层的涂鸦处理
-                }
-                mScale = mGraffitiView.getScale();
-                switch (event.getAction() & MotionEvent.ACTION_MASK) {
-                    case MotionEvent.ACTION_DOWN:
-                        mTouchMode = 1;
-                        mTouchLastX = event.getX();
-                        mTouchLastY = event.getY();
-                        return true;
-                    case MotionEvent.ACTION_UP:
-                    case MotionEvent.ACTION_CANCEL:
-                        mTouchMode = 0;
-                        return true;
-                    case MotionEvent.ACTION_MOVE:
-                        if (mTouchMode < 2) { // 单点滑动
-                            if (mIsBusy) { // 从多点触摸变为单点触摸，忽略该次事件，避免从双指缩放变为单指移动时图片瞬间移动
-                                mIsBusy = false;
-                                mTouchLastX = event.getX();
-                                mTouchLastY = event.getY();
-                                return true;
-                            }
-                            float tranX = event.getX() - mTouchLastX;
-                            float tranY = event.getY() - mTouchLastY;
-                            mGraffitiView.setTrans(mGraffitiView.getTransX() + tranX, mGraffitiView.getTransY() + tranY);
-                            mTouchLastX = event.getX();
-                            mTouchLastY = event.getY();
-                        } else { // 多点
-                            mNewDist = spacing(event);// 两点滑动时的距离
-                            if (Math.abs(mNewDist - mOldDist) >= mTouchSlop) {
-                                float scale = mNewDist / mOldDist;
-                                mScale = mOldScale * scale;
-
-                                if (mScale > mMaxScale) {
-                                    mScale = mMaxScale;
-                                }
-                                if (mScale < mMinScale) { // 最小倍数
-                                    mScale = mMinScale;
-                                }
-                                // 围绕坐标(0,0)缩放图片
-                                mGraffitiView.setScale(mScale);
-                                // 缩放后，偏移图片，以产生围绕某个点缩放的效果
-                                float transX = mGraffitiView.toTransX(mTouchCentreX, mToucheCentreXOnGraffiti);
-                                float transY = mGraffitiView.toTransY(mTouchCentreY, mToucheCentreYOnGraffiti);
-                                mGraffitiView.setTrans(transX, transY);
-                            }
-                        }
-                        return true;
-                    case MotionEvent.ACTION_POINTER_UP:
-                        mTouchMode -= 1;
-                        return true;
-                    case MotionEvent.ACTION_POINTER_DOWN:
-                        mTouchMode += 1;
-                        mOldScale = mGraffitiView.getScale();
-                        mOldDist = spacing(event);// 两点按下时的距离
-                        mTouchCentreX = (event.getX(0) + event.getX(1)) / 2;// 不用减trans
-                        mTouchCentreY = (event.getY(0) + event.getY(1)) / 2;
-                        mToucheCentreXOnGraffiti = mGraffitiView.toX(mTouchCentreX);
-                        mToucheCentreYOnGraffiti = mGraffitiView.toY(mTouchCentreY);
-                        mIsBusy = true; // 标志位多点触摸
-                        return true;
-                }
-                return true;
+                return false;
             }
         });
 
@@ -433,19 +353,6 @@ public class GraffitiActivity extends Activity {
                 showView(mSettingsPanel);
             }
         };
-    }
-
-    /**
-     * 计算两指间的距离
-     *
-     * @param event
-     * @return
-     */
-
-    private float spacing(MotionEvent event) {
-        float x = event.getX(0) - event.getX(1);
-        float y = event.getY(0) - event.getY(1);
-        return (float) Math.sqrt(x * x + y * y);
     }
 
     private class GraffitiOnClickListener implements View.OnClickListener {
@@ -549,6 +456,7 @@ public class GraffitiActivity extends Activity {
             } else if (v.getId() == R.id.btn_move_pic) {
                 v.setSelected(!v.isSelected());
                 mIsMovingPic = v.isSelected();
+                mGraffitiView.setMoving(mIsMovingPic);
                 if (mIsMovingPic) {
                     Toast.makeText(getApplicationContext(), R.string.graffiti_moving_pic, Toast.LENGTH_SHORT).show();
                 }
