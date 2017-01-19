@@ -6,7 +6,7 @@ package cn.hzw.graffiti.widget.graffiti.info;
  * @Description 图形
  */
 public enum Shape {
-    HAND_WRITE, //
+    HAND_WRITE, // 绘点连接
     ARROW, // 箭头
     LINE, // 直线
     FILL_CIRCLE, // 实心圆

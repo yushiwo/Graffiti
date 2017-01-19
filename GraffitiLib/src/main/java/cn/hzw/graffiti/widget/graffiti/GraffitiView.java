@@ -35,11 +35,9 @@ public class GraffitiView extends View {
 
     private static final String TAG = GraffitiView.class.getSimpleName();
 
-    public static final int ERROR_INIT = -1;
     public static final int ERROR_SAVE = -2;
 
     private static final float VALUE = 1f;
-    private final int TIME_SPAN = 80;
 
     private GraffitiListener mGraffitiListener;
 
@@ -190,7 +188,7 @@ public class GraffitiView extends View {
         mCanvasPath = new Path();
         mTempPath = new Path();
         mCopyLocation = new CopyLocation(150, 150);
-
+        // 放大相关
         mAmplifierPaint = new Paint();
         mAmplifierPaint.setColor(0xaaffffff);
         mAmplifierPaint.setStyle(Paint.Style.STROKE);
@@ -217,7 +215,6 @@ public class GraffitiView extends View {
      * @param event
      * @return
      */
-
     private float spacing(MotionEvent event) {
         float x = event.getX(0) - event.getX(1);
         float y = event.getY(0) - event.getY(1);
@@ -584,7 +581,7 @@ public class GraffitiView extends View {
                         toY4C((mTouchY + mLastTouchY + VALUE) / 2));
                 path = mTempPath;
                 span = VALUE;
-            } else {
+            } else {  // 是一个完整的笔画,则直接绘制,不需要偏移
                 path = mCanvasPath;
                 span = 0;
             }
@@ -603,6 +600,16 @@ public class GraffitiView extends View {
         }
     }
 
+    /**
+     * 手写,绘制在view的画布上
+     * @param canvas
+     * @param pen
+     * @param paint
+     * @param path
+     * @param matrix
+     * @param is4Canvas
+     * @param color
+     */
     private void draw(Canvas canvas, Pen pen, Paint paint, Path path, Matrix matrix, boolean is4Canvas, GraffitiColor color) {
         resetPaint(pen, paint, is4Canvas, matrix, color);
 
@@ -611,6 +618,20 @@ public class GraffitiView extends View {
 
     }
 
+    /**
+     * 在view的画布上绘制图形
+     * @param canvas
+     * @param pen
+     * @param shape
+     * @param paint
+     * @param sx
+     * @param sy
+     * @param dx
+     * @param dy
+     * @param matrix
+     * @param is4Canvas
+     * @param color
+     */
     private void draw(Canvas canvas, Pen pen, Shape shape, Paint paint, float sx, float sy, float dx, float dy, Matrix matrix, boolean is4Canvas, GraffitiColor color) {
         resetPaint(pen, paint, is4Canvas, matrix, color);
 
@@ -658,6 +679,14 @@ public class GraffitiView extends View {
         }
     }
 
+    /**
+     * 设置画笔相关参数
+     * @param pen
+     * @param paint
+     * @param is4Canvas
+     * @param matrix
+     * @param color
+     */
     private void resetPaint(Pen pen, Paint paint, boolean is4Canvas, Matrix matrix, GraffitiColor color) {
         switch (pen) { // 设置画笔
             case HAND:
@@ -909,9 +938,6 @@ public class GraffitiView extends View {
      * 保存
      */
     public void save() {
-//            initCanvas();
-//            draw(mBitmapCanvas, mPathStackBackup, false);
-//            draw(mBitmapCanvas, mPathStack, false);
         mGraffitiListener.onSaved(mGraffitiBitmap, mBitmapEraser);
     }
 
@@ -920,7 +946,6 @@ public class GraffitiView extends View {
      */
     public void clear() {
         mPathStack.clear();
-//        mPathStackBackup.clear();
         initCanvas();
         invalidate();
     }

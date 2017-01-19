@@ -40,6 +40,11 @@ public class GraffitiColor {
         mTileY = tileY;
     }
 
+    /**
+     * 初始化画笔的颜色(手写 or 图片涂鸦)
+     * @param paint 画笔
+     * @param matrix 矩阵
+     */
     public void initColor(Paint paint, Matrix matrix) {
         if (mType == GraffitiColor.Type.COLOR) {
             paint.setColor(mColor);
