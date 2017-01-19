@@ -31,7 +31,7 @@ import cn.hzw.graffiti.widget.graffiti.info.Shape;
  */
 public class GraffitiView extends View {
 
-    // TODO: 17/1/18 相关效果:http://blog.csdn.net/u010156024/article/details/48047737 
+    // TODO: 17/1/18 相关效果:http://blog.csdn.net/u010156024/article/details/48047737
 
     private static final String TAG = GraffitiView.class.getSimpleName();
 
@@ -47,7 +47,7 @@ public class GraffitiView extends View {
     private Bitmap mBitmap;
     /** 橡皮擦底图 */
     private Bitmap mBitmapEraser;
-    /** 用绘制涂鸦的图片 */
+    /** 原图 + 绘制path的合成图 */
     private Bitmap mGraffitiBitmap;
     /** 图片的Canvas */
     private Canvas mBitmapCanvas;
@@ -59,13 +59,19 @@ public class GraffitiView extends View {
     /** 图片居中时的偏移（肉眼看到的在屏幕上的偏移）*/
     private float mCentreTranX, mCentreTranY;
 
-    private BitmapShader mBitmapShader; // 用于涂鸦的图片上
+    /** 用于涂鸦的图片上 */
+    private BitmapShader mBitmapShader;
     private BitmapShader mBitmapShader4C;
-    private BitmapShader mBitmapShaderEraser; // 橡皮擦底图
+    /** 橡皮擦底图 */
+    private BitmapShader mBitmapShaderEraser;
     private BitmapShader mBitmapShaderEraser4C;
-    private Path mCurrPath; // 当前手写的路径
-    private Path mCanvasPath; //
+    /** 当前手写的路径,只记录一笔(相对于图片参考系的路径) */
+    private Path mCurrPath;
+    /** 当前手写的路径,貌似也是记录一笔(相对于view的画布的路径) */
+    private Path mCanvasPath;
+    /** 当前手写的路径,貌似也是记录一笔(仅单击时也能涂鸦) */
     private Path mTempPath;
+
     private CopyLocation mCopyLocation; // 仿制的定位器
 
     private Paint mPaint;
@@ -92,7 +98,6 @@ public class GraffitiView extends View {
 
     /** 保存涂鸦操作，便于撤销 */
     private CopyOnWriteArrayList<GraffitiPath> mPathStack = new CopyOnWriteArrayList<GraffitiPath>();
-//    private CopyOnWriteArrayList<GraffitiPath> mPathStackBackup = new CopyOnWriteArrayList<GraffitiPath>();
 
     private Pen mPen;
     private Shape mShape;
@@ -100,6 +105,7 @@ public class GraffitiView extends View {
     private float mTouchDownX, mTouchDownY, mLastTouchX, mLastTouchY, mTouchX, mTouchY;
     private Matrix mShaderMatrix, mShaderMatrix4C, mMatrixTemp;
 
+    /*********** 放大器相关设置 *************/
     private float mAmplifierRadius;
     private Path mAmplifierPath;
     private float mAmplifierScale = 0; // 放大镜的倍数
@@ -155,7 +161,7 @@ public class GraffitiView extends View {
     public void init() {
 
         mScale = 1f;
-        mPaintSize = 30;
+        mPaintSize = 10;
         mColor = new GraffitiColor(Color.RED);
         mPaint = new Paint();
         mPaint.setStrokeWidth(mPaintSize);
